@@ -1,0 +1,86 @@
+@import "tailwindcss";
+
+:root {
+  --background: #ffffff;
+  --foreground: #171717;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #0a0a0a;
+    --foreground: #ededed;
+  }
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+@layer utilities {
+  /* TU COLOR DORADO PERSONALIZADO */
+  .text-gold { color: #D4AF37; }
+  .bg-gold { background-color: #D4AF37; }
+  .border-gold { border-color: #D4AF37; }
+  
+  .hover-bg-gold:hover { background-color: #C5A028; }
+  
+  /* ANIMACIÓN DE ENTRADA SUAVE (FADE IN) */
+  .animate-fade-in {
+    animation: fadeIn 0.8s ease-out forwards;
+    opacity: 0;
+    transform: translateY(10px);
+  }
+
+  @keyframes fadeIn {
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  /* OCULTAR BARRA DE SCROLL PERO PERMITIR DESLIZAR (Para categorías) */
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+}
+
+@layer utilities {
+  /* ANIMACIÓN PARA EL FONDO NEGRO (Aparece suave) */
+  .animate-backdrop-enter {
+    animation: backdropEnter 0.4s ease-out forwards;
+  }
+
+  /* ANIMACIÓN PARA LA VENTANA (Efecto Levitación Premium) */
+  .animate-modal-enter {
+    animation: modalEnter 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  }
+
+  @keyframes backdropEnter {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+
+  @keyframes modalEnter {
+    from {
+      opacity: 0;
+      transform: scale(0.96) translateY(20px); /* Empieza pequeño y abajo */
+    }
+    to {
+      opacity: 1;
+      transform: scale(1) translateY(0); /* Termina en su sitio */
+    }
+  }
+}
