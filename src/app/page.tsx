@@ -26,9 +26,9 @@ export default function Home() {
   const [currentSlide, setCurrentSlide] = useState(0);
 
   const heroImages = [
-    "/images/carousel/slide-1.png",
-    "/images/carousel/slide-2.png",
-    "/images/carousel/slide-3.png",
+    "/images/carousel/Slide-1.png",
+    "/images/carousel/Slide-2.png",
+    "/images/carousel/Slide-3.png",
   ];
 
   useEffect(() => {
