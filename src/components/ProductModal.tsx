@@ -126,7 +126,7 @@ export default function ProductModal({
     >
       <div
         onClick={(e) => e.stopPropagation()}
-        className="relative w-full max-w-5xl overflow-hidden rounded-t-[2rem] sm:rounded-[2.5rem] bg-white shadow-2xl md:grid md:grid-cols-2 animate-in slide-in-from-bottom sm:slide-in-from-bottom-4 duration-500 max-h-[95vh]"
+        className="relative w-full max-w-5xl overflow-hidden rounded-t-[2rem] sm:rounded-[2.5rem] bg-white shadow-2xl md:grid md:grid-cols-2 animate-in slide-in-from-bottom sm:slide-in-from-bottom-4 duration-500 max-h-[95vh] flex flex-col md:flex-row"
       >
         <button
           onClick={onClose}
@@ -135,8 +135,8 @@ export default function ProductModal({
           <X size={20} />
         </button>
 
-        {/* IMAGEN CON ZOOM SUAVIZADO (1.05 en lugar de 1.10) */}
-        <div className="relative h-[45vh] md:h-full bg-[#F9F8F6] overflow-hidden">
+        {/* IMAGEN - Ajuste de altura para permitir scroll en el texto */}
+        <div className="relative h-[40vh] md:h-full bg-[#F9F8F6] overflow-hidden flex-shrink-0">
           {product.image_url ? (
             <img
               src={product.image_url}
@@ -158,7 +158,8 @@ export default function ProductModal({
           )}
         </div>
 
-        <div className="flex flex-col p-8 md:p-14 overflow-y-auto custom-scrollbar bg-white">
+        {/* CONTENIDO CON SCROLL HABILITADO */}
+        <div className="flex flex-col p-8 md:p-14 overflow-y-auto bg-white max-h-[55vh] md:max-h-[95vh] custom-scrollbar">
           <div className="flex items-center gap-4 mb-6">
             <span className="text-[10px] font-black uppercase tracking-[0.2em] text-[#D4AF37] border border-[#D4AF37]/30 px-3 py-1 rounded-full">
               {product.category}
@@ -204,7 +205,6 @@ export default function ProductModal({
             </div>
           </div>
 
-          {/* COLORES - CORREGIDO TIPADO (color: string) */}
           {!isOutOfStock && availableColors.length > 0 && (
             <div className="mb-8">
               <div className="flex justify-between mb-4">
@@ -237,7 +237,6 @@ export default function ProductModal({
             </div>
           )}
 
-          {/* TALLAS - CORREGIDO TIPADO (size: string) */}
           {!isOutOfStock && availableSizes.length > 0 && (
             <div className="mb-10">
               <div className="flex justify-between mb-4">
@@ -266,7 +265,8 @@ export default function ProductModal({
             </div>
           )}
 
-          <div className="mt-auto flex flex-col sm:flex-row gap-4 pt-6 border-t border-gray-50">
+          {/* ÁREA DE ACCIÓN - Ahora siempre visible mediante scroll */}
+          <div className="mt-auto flex flex-col sm:flex-row gap-4 pt-6 border-t border-gray-50 pb-4">
             {isOutOfStock ? (
               <button
                 disabled
@@ -311,7 +311,7 @@ export default function ProductModal({
             )}
           </div>
 
-          <p className="mt-6 text-[9px] text-center text-gray-300 font-bold uppercase tracking-widest">
+          <p className="mt-4 text-[9px] text-center text-gray-300 font-bold uppercase tracking-widest pb-2">
             Envío asegurado a toda Colombia
           </p>
         </div>
