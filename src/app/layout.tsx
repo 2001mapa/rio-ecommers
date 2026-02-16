@@ -57,36 +57,32 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="es" className="scroll-smooth">
-      <head>
-        {/* Meta Pixel (Facebook Ads Retargeting) */}
-        {/* Solo renderiza el script si existe el ID, así evitamos errores si está vacío */}
-        {process.env.NEXT_PUBLIC_FB_PIXEL_ID && (
-          <Script id="fb-pixel" strategy="afterInteractive">
-            {`
-      !function(f,b,e,v,n,t,s)
-      {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
-      n.callMethod.apply(n,arguments):n.queue.push(arguments)};
-      if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
-      n.queue=[];t=b.createElement(e);t.async=!0;
-      t.src=v;s=b.getElementsByTagName(e)[0];
-      s.parentNode.insertBefore(t,s)}(window, document,'script',
-      'https://connect.facebook.net/en_US/fbevents.js');
-      fbq('init', '${process.env.NEXT_PUBLIC_FB_PIXEL_ID}'); 
-      fbq('track', 'PageView');
-    `}
-          </Script>
-        )}
-      </head>
       <body
         className={`${inter.variable} ${playfair.variable} font-sans bg-white antialiased`}
       >
         {/* Renderizamos el contenido principal primero */}
         {children}
 
-        {/* Analytics se carga después para no bloquear la visualización inicial */}
-        <GoogleAnalytics />
+        {/* Meta Pixel - Movido aquí para no romper el HEAD/CSS */}
+        {process.env.NEXT_PUBLIC_FB_PIXEL_ID && (
+          <Script id="fb-pixel" strategy="afterInteractive">
+            {`
+              !function(f,b,e,v,n,t,s)
+              {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+              n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+              if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+              n.queue=[];t=b.createElement(e);t.async=!0;
+              t.src=v;s=b.getElementsByTagName(e)[0];
+              s.parentNode.insertBefore(t,s)}(window, document,'script',
+              'https://connect.facebook.net/en_US/fbevents.js');
+              fbq('init', '${process.env.NEXT_PUBLIC_FB_PIXEL_ID}'); 
+              fbq('track', 'PageView');
+            `}
+          </Script>
+        )}
 
-        {/* Notificaciones elegantes */}
+        {/* Analytics y Notificaciones */}
+        <GoogleAnalytics />
         <Toaster position="bottom-center" richColors />
       </body>
     </html>
