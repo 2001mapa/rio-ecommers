@@ -59,6 +59,7 @@ export default function RootLayout({
     <html lang="es" className="scroll-smooth">
       <head>
         {/* Meta Pixel (Facebook Ads Retargeting) */}
+        {/* Solo renderiza el script si existe el ID, así evitamos errores si está vacío */}
         {process.env.NEXT_PUBLIC_FB_PIXEL_ID && (
           <Script id="fb-pixel" strategy="afterInteractive">
             {`
