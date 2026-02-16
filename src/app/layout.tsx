@@ -3,6 +3,7 @@ import { Inter, Playfair_Display } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "sonner";
 import GoogleAnalytics from "../components/GoogleAnalytics";
+import Script from "next/script";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
 const playfair = Playfair_Display({
@@ -22,12 +23,20 @@ export const metadata: Metadata = {
     "RIO",
   ],
   icons: {
-    icon: "data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><circle cx=%2250%22 cy=%2250%22 r=%2250%22 fill=%22white%22/><text x=%2250%22 y=%2275%22 font-family=%22serif%22 font-weight=%22bold%22 font-size=%2270%22 fill=%22%23FFD700%22 text-anchor=%22middle%22>R</text></svg>",
+    // Corregido: url y href ahora apuntan al mismo archivo y usamos v=10 para forzar el cambio
+    icon: [
+      {
+        url: "/favicon.png?v=10",
+        href: "/favicon.png?v=10",
+      },
+    ],
+    shortcut: ["/favicon.png?v=10"],
+    apple: ["/favicon.png?v=10"],
   },
   openGraph: {
     title: "RIO COLOMBIA | Bisutería Fina",
     description: "Piezas exclusivas que conectan con tu historia.",
-    url: "https://riocolombia.com", // Recuerda cambiar esto cuando tengas el link de Vercel
+    url: "https://riocolombia.com",
     siteName: "RIO COLOMBIA",
     images: [
       {
@@ -48,6 +57,25 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="es" className="scroll-smooth">
+      <head>
+        {/* Meta Pixel (Facebook Ads Retargeting) */}
+        {process.env.NEXT_PUBLIC_FB_PIXEL_ID && (
+          <Script id="fb-pixel" strategy="afterInteractive">
+            {`
+      !function(f,b,e,v,n,t,s)
+      {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+      n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+      if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+      n.queue=[];t=b.createElement(e);t.async=!0;
+      t.src=v;s=b.getElementsByTagName(e)[0];
+      s.parentNode.insertBefore(t,s)}(window, document,'script',
+      'https://connect.facebook.net/en_US/fbevents.js');
+      fbq('init', '${process.env.NEXT_PUBLIC_FB_PIXEL_ID}'); 
+      fbq('track', 'PageView');
+    `}
+          </Script>
+        )}
+      </head>
       <body
         className={`${inter.variable} ${playfair.variable} font-sans bg-white antialiased`}
       >

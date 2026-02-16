@@ -10,14 +10,18 @@ export interface CartItem {
   category: string;
   selectedColor?: string;
   selectedSize?: string;
+  // Añadimos estas dos para que el carrito conozca todas las opciones disponibles
+  colors?: string[];
+  sizes?: string[];
 }
 
 interface CartStore {
   items: CartItem[];
   addItem: (product: CartItem) => void;
-  // Cambiamos las firmas para identificar la variante exacta
   removeItem: (id: string, color?: string, size?: string) => void;
   updateQuantity: (id: string, quantity: number, color?: string, size?: string) => void;
+  // Nueva función para cambiar color o talla directamente
+  updateVariant: (id: string, oldColor?: string, oldSize?: string, newColor?: string, newSize?: string) => void;
   clearCart: () => void;
 }
 
@@ -65,10 +69,53 @@ export const useCart = create<CartStore>()(
         }));
       },
 
+      // Lógica para actualizar Color o Talla
+      updateVariant: (id, oldColor, oldSize, newColor, newSize) => {
+        set((state) => {
+          // 1. Buscamos el item que queremos cambiar
+          const currentItem = state.items.find(item => 
+            item.id === id && item.selectedColor === oldColor && item.selectedSize === oldSize
+          );
+
+          if (!currentItem) return state;
+
+          // 2. Revisamos si ya existe OTRO item con la NUEVA combinación
+          const existingTargetIndex = state.items.findIndex(item => 
+            item.id === id && item.selectedColor === newColor && item.selectedSize === newSize
+          );
+
+          // Si ya existe la combinación nueva, los fusionamos
+          if (existingTargetIndex > -1 && 
+              !(oldColor === newColor && oldSize === newSize)) {
+            
+            const filteredItems = state.items.filter(item => 
+              !(item.id === id && item.selectedColor === oldColor && item.selectedSize === oldSize)
+            );
+
+            const newItems = [...filteredItems];
+            newItems[existingTargetIndex] = {
+              ...newItems[existingTargetIndex],
+              quantity: newItems[existingTargetIndex].quantity + currentItem.quantity
+            };
+
+            return { items: newItems };
+          }
+
+          // Si es una combinación única, solo actualizamos las propiedades
+          return {
+            items: state.items.map((item) =>
+              (item.id === id && item.selectedColor === oldColor && item.selectedSize === oldSize)
+                ? { ...item, selectedColor: newColor, selectedSize: newSize }
+                : item
+            ),
+          };
+        });
+      },
+
       clearCart: () => set({ items: [] }),
     }),
     {
-      name: 'rio-cart-storage', // Persistencia en LocalStorage
+      name: 'rio-cart-storage',
     }
   )
 );

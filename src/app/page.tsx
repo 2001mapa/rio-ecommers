@@ -132,7 +132,7 @@ export default function Home() {
             <button
               onClick={() =>
                 document
-                  .getElementById("catalogo")
+                  .getElementById("catalogo") // Corregido: Ahora coincide con el ID de la sección abajo
                   ?.scrollIntoView({ behavior: "smooth" })
               }
               className="border border-white bg-white/10 backdrop-blur-md px-10 py-4 text-xs font-bold uppercase tracking-widest text-white transition hover:bg-white hover:text-black rounded-full"

@@ -11,6 +11,7 @@ import {
   Mail,
   FileText,
   Loader2,
+  Check, // Nuevo icono para el checklist
 } from "lucide-react";
 
 // Rutas relativas
@@ -23,6 +24,11 @@ export default function OrderPage() {
   const supabase = createClient();
   const [order, setOrder] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+
+  // ESTADO PARA EL CHECKLIST (Local)
+  const [checkedItems, setCheckedItems] = useState<{ [key: number]: boolean }>(
+    {},
+  );
 
   useEffect(() => {
     const fetchOrder = async () => {
@@ -45,6 +51,14 @@ export default function OrderPage() {
 
     fetchOrder();
   }, [params.id, supabase]);
+
+  // Función para marcar/desmarcar
+  const toggleCheck = (index: number) => {
+    setCheckedItems((prev) => ({
+      ...prev,
+      [index]: !prev[index],
+    }));
+  };
 
   if (loading)
     return (
@@ -70,7 +84,6 @@ export default function OrderPage() {
     );
   }
 
-  // --- RE-CALCULAR MATEMÁTICA PARA EL RECIBO ---
   const subtotal = order.products.reduce(
     (acc: number, item: any) => acc + item.price * item.quantity,
     0,
@@ -80,11 +93,8 @@ export default function OrderPage() {
     0,
   );
 
-  // Regla 1: Descuento si items >= 12
   const hasDiscount = totalItems >= 12;
   const discountValue = hasDiscount ? subtotal * 0.4 : 0;
-
-  // Regla 2: Envío si subtotal > 99.990
   const hasFreeShipping = subtotal > 99990;
   const shipping = hasFreeShipping ? 0 : 15000;
 
@@ -172,46 +182,77 @@ export default function OrderPage() {
           </div>
         </div>
 
-        {/* LISTA DE PRODUCTOS */}
+        {/* LISTA DE PRODUCTOS CON CHECKLIST */}
         <div className="mb-6 overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm">
-          <div className="bg-gray-50/50 p-4 border-b border-gray-100">
+          <div className="bg-gray-50/50 p-4 border-b border-gray-100 flex justify-between items-center">
             <h2 className="font-serif text-lg font-bold text-gray-900">
-              Resumen de Compra ({order.products.length})
+              Artículos para Alistamiento ({order.products.length})
             </h2>
+            <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">
+              Check de Salida
+            </span>
           </div>
           <ul className="divide-y divide-gray-50">
-            {order.products.map((item: any, index: number) => (
-              <li
-                key={index}
-                className="flex items-center gap-4 p-4 transition-colors hover:bg-gray-50/30"
-              >
-                <div className="h-20 w-20 flex-shrink-0 overflow-hidden rounded-xl border border-gray-100 bg-gray-50">
-                  {item.image_url && (
-                    <img
-                      src={item.image_url}
-                      alt={item.name}
-                      className="h-full w-full object-cover transition-transform hover:scale-110"
-                    />
-                  )}
-                </div>
-                <div className="flex flex-1 flex-col">
-                  <h3 className="font-bold text-gray-900 leading-tight">
-                    {item.name}
-                  </h3>
-                  <p className="text-xs font-medium text-gray-400 uppercase mt-1">
-                    {item.selectedColor || item.material}
-                  </p>
-                  <div className="mt-2 text-sm font-bold text-gray-400">
-                    {item.quantity}{" "}
-                    <span className="text-[10px] font-normal">X</span>{" "}
-                    {formatPrice(item.price)}
+            {order.products.map((item: any, index: number) => {
+              const isChecked = !!checkedItems[index];
+              return (
+                <li
+                  key={index}
+                  onClick={() => toggleCheck(index)}
+                  className={`flex items-center gap-4 p-4 transition-all cursor-pointer select-none ${
+                    isChecked ? "bg-gray-50/80" : "hover:bg-gray-50/30"
+                  }`}
+                >
+                  {/* CHECKBOX PERSONALIZADO */}
+                  <div
+                    className={`flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full border-2 transition-all ${
+                      isChecked
+                        ? "bg-green-500 border-green-500 shadow-sm"
+                        : "border-gray-200 bg-white"
+                    }`}
+                  >
+                    {isChecked && (
+                      <Check className="h-4 w-4 text-white" strokeWidth={3} />
+                    )}
                   </div>
-                </div>
-                <div className="text-right font-serif font-bold text-gray-900">
-                  {formatPrice(item.price * item.quantity)}
-                </div>
-              </li>
-            ))}
+
+                  <div
+                    className={`h-16 w-16 flex-shrink-0 overflow-hidden rounded-xl border border-gray-100 bg-gray-50 transition-opacity ${isChecked ? "opacity-50" : "opacity-100"}`}
+                  >
+                    {item.image_url && (
+                      <img
+                        src={item.image_url}
+                        alt={item.name}
+                        className="h-full w-full object-cover"
+                      />
+                    )}
+                  </div>
+
+                  <div
+                    className={`flex flex-1 flex-col transition-all ${isChecked ? "opacity-40" : "opacity-100"}`}
+                  >
+                    <h3
+                      className={`font-bold text-gray-900 leading-tight ${isChecked ? "line-through decoration-gray-400" : ""}`}
+                    >
+                      {item.name}
+                    </h3>
+                    <p className="text-[10px] font-bold text-[#D4AF37] uppercase mt-1">
+                      {item.selectedColor || item.material}{" "}
+                      {item.selectedSize ? `| TALLA ${item.selectedSize}` : ""}
+                    </p>
+                    <div className="mt-1 text-sm font-bold text-gray-900">
+                      Cant: {item.quantity}
+                    </div>
+                  </div>
+
+                  <div
+                    className={`text-right font-serif font-bold text-gray-400 transition-opacity ${isChecked ? "opacity-20" : "opacity-100"}`}
+                  >
+                    {formatPrice(item.price * item.quantity)}
+                  </div>
+                </li>
+              );
+            })}
           </ul>
         </div>
 

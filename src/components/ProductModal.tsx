@@ -92,11 +92,17 @@ export default function ProductModal({
       return;
     }
 
-    const productToAdd = { ...product, selectedColor, selectedSize };
+    // AGREGADO: Incluimos colors y sizes para que el carrito sepa qué opciones mostrar
+    const productToAdd = {
+      ...product,
+      selectedColor,
+      selectedSize,
+      colors: availableColors,
+      sizes: availableSizes,
+      quantity: quantity, // Pasamos la cantidad directamente para evitar el bucle for
+    };
 
-    for (let i = 0; i < quantity; i++) {
-      addItem(productToAdd);
-    }
+    addItem(productToAdd);
 
     const variants = [selectedColor, selectedSize].filter(Boolean).join(" - ");
     toast.success(`${product.name} agregado`, {
@@ -107,12 +113,13 @@ export default function ProductModal({
     onClose();
   }, [
     isOutOfStock,
-    availableSizes.length,
+    availableSizes,
     selectedSize,
     quantity,
     currentStock,
     product,
     selectedColor,
+    availableColors,
     addItem,
     onClose,
   ]);
@@ -135,7 +142,7 @@ export default function ProductModal({
           <X size={20} />
         </button>
 
-        {/* IMAGEN - Ajuste de altura para permitir scroll en el texto */}
+        {/* IMAGEN */}
         <div className="relative h-[40vh] md:h-full bg-[#F9F8F6] overflow-hidden flex-shrink-0">
           {product.image_url ? (
             <img
@@ -158,7 +165,7 @@ export default function ProductModal({
           )}
         </div>
 
-        {/* CONTENIDO CON SCROLL HABILITADO */}
+        {/* CONTENIDO */}
         <div className="flex flex-col p-8 md:p-14 overflow-y-auto bg-white max-h-[55vh] md:max-h-[95vh] custom-scrollbar">
           <div className="flex items-center gap-4 mb-6">
             <span className="text-[10px] font-black uppercase tracking-[0.2em] text-[#D4AF37] border border-[#D4AF37]/30 px-3 py-1 rounded-full">
@@ -265,7 +272,6 @@ export default function ProductModal({
             </div>
           )}
 
-          {/* ÁREA DE ACCIÓN - Ahora siempre visible mediante scroll */}
           <div className="mt-auto flex flex-col sm:flex-row gap-4 pt-6 border-t border-gray-50 pb-4">
             {isOutOfStock ? (
               <button

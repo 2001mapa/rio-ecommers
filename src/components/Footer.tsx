@@ -8,14 +8,19 @@ import {
   ShieldCheck,
   Lock,
   ArrowRight,
+  MapPin, // Añadimos el icono de ubicación
 } from "lucide-react";
 
 export default function Footer() {
   // Centralizamos los links para facilitar el mantenimiento y evitar repetición de código
   const shopLinks = [
-    { name: "Catálogo", href: "/" },
+    { name: "Catálogo", href: "/#productoss" },
     { name: "Mi Carrito", href: "/cart" },
-    { name: "Novedades 2026", href: "/" },
+    {
+      name: "Visita nuestro Showroom",
+      href: "https://www.google.com/maps/search/?api=1&query=Calle+45+%2353-50+Centro+Comercial+Gran+Plaza+Medellín",
+      isExternal: true,
+    },
   ];
 
   const serviceLinks = [
@@ -77,15 +82,29 @@ export default function Footer() {
             <ul className="space-y-5">
               {shopLinks.map((item) => (
                 <li key={item.name}>
-                  <Link
-                    href={item.href}
-                    className="text-[13px] text-gray-600 hover:text-[#D4AF37] flex items-center group transition-all duration-300"
-                  >
-                    <span className="w-0 group-hover:w-4 opacity-0 group-hover:opacity-100 transition-all duration-300 text-[#D4AF37] overflow-hidden">
-                      <ArrowRight size={12} className="mr-2" />
-                    </span>
-                    {item.name}
-                  </Link>
+                  {item.isExternal ? (
+                    <a
+                      href={item.href}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-[13px] text-gray-600 hover:text-[#D4AF37] flex items-center group transition-all duration-300"
+                    >
+                      <span className="w-0 group-hover:w-4 opacity-0 group-hover:opacity-100 transition-all duration-300 text-[#D4AF37] overflow-hidden">
+                        <MapPin size={12} className="mr-2" />
+                      </span>
+                      {item.name}
+                    </a>
+                  ) : (
+                    <Link
+                      href={item.href}
+                      className="text-[13px] text-gray-600 hover:text-[#D4AF37] flex items-center group transition-all duration-300"
+                    >
+                      <span className="w-0 group-hover:w-4 opacity-0 group-hover:opacity-100 transition-all duration-300 text-[#D4AF37] overflow-hidden">
+                        <ArrowRight size={12} className="mr-2" />
+                      </span>
+                      {item.name}
+                    </Link>
+                  )}
                 </li>
               ))}
             </ul>

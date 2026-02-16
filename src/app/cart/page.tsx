@@ -24,9 +24,10 @@ const WHOLESALE_MIN_ITEMS = 12;
 const WHOLESALE_DISCOUNT = 0.4;
 
 export default function CartPage() {
-  const { items, removeItem, updateQuantity, clearCart } = useCart();
+  // Se agregó updateVariant de la nueva lógica
+  const { items, removeItem, updateQuantity, updateVariant, clearCart } =
+    useCart();
   const [loading, setLoading] = useState(false);
-  // OPTIMIZADO: El ID de borrado ahora incluye variantes para no animar lo que no es
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [hpValue, setHpValue] = useState("");
   const [formData, setFormData] = useState({
@@ -43,7 +44,6 @@ export default function CartPage() {
   // --- CÁLCULOS MEMORIZADOS ---
   const {
     subtotal,
-    totalItems,
     isWholesale,
     discountAmount,
     shippingCost,
@@ -74,13 +74,10 @@ export default function CartPage() {
     };
   }, [items]);
 
-  // CORREGIDO: Maneja el borrado identificando color y talla
   const handleRemoveClick = (id: string, color?: string, size?: string) => {
-    // Unificamos la generación de la key
     const variantKey = `${id}-${color || ""}-${size || ""}`;
     setDeletingId(variantKey);
 
-    // Esperamos a que termine la animación de 300ms antes de quitarlo del estado
     setTimeout(() => {
       removeItem(id, color, size);
       setDeletingId(null);
@@ -97,7 +94,6 @@ export default function CartPage() {
     if (hpValue !== "") return;
     if (items.length === 0) return toast.error("Tu carrito está vacío");
 
-    // Validaciones
     if (formData.name.trim().split(" ").length < 2)
       return toast.error("Ingresa nombre y apellido.");
     if (!/^\d{6,12}$/.test(formData.id_number))
@@ -112,7 +108,6 @@ export default function CartPage() {
     setLoading(true);
 
     try {
-      // 1. Guardar Pedido
       const { data: order, error: orderError } = await supabase
         .from("orders")
         .insert({
@@ -126,7 +121,6 @@ export default function CartPage() {
 
       if (orderError) throw orderError;
 
-      // 2. Google Analytics
       if (typeof window !== "undefined" && (window as any).gtag) {
         (window as any).gtag("event", "generate_lead", {
           event_category: "Ventas",
@@ -135,7 +129,6 @@ export default function CartPage() {
         });
       }
 
-      // 3. Descontar Inventario
       await Promise.all(
         items.map(async (item) => {
           const { data } = await supabase
@@ -152,22 +145,37 @@ export default function CartPage() {
         }),
       );
 
-      // 4. Preparar WhatsApp
       const orderId = order.id.slice(0, 8);
-      let msg = `*¡Hola Rio! Pedido #${orderId}*\n👤 *Cliente:* ${formData.name}\n📍 *Ciudad:* ${formData.city}\n\n*--- PRODUCTOS ---*\n`;
+      const totalItems = items.reduce((acc, item) => acc + item.quantity, 0);
 
-      items.forEach((item) => {
-        const variants = [item.selectedColor, item.selectedSize]
-          .filter(Boolean)
-          .join(" - ");
-        msg += `▪️ ${item.quantity}x ${item.name}${variants ? ` (${variants})` : ""} - ${formatPrice(item.price * item.quantity)}\n`;
-      });
+      // Construcción del mensaje profesional
+      let msg = `¡Hola *Rio*! 👋 Mi pedido ya está listo.\n\n`;
+      msg += `🆔 *Orden ID:* #${orderId}\n`;
+      msg += `🛍️ *Artículos:* ${totalItems} unidades\n\n`;
 
-      msg += `\n💵 *Subtotal:* ${formatPrice(subtotal)}`;
-      if (isWholesale)
-        msg += `\n✨ *Desc. Mayorista:* -${formatPrice(discountAmount)}`;
-      msg += `\n📦 *Envío:* ${shippingCost === 0 ? "¡GRATIS!" : formatPrice(shippingCost)}`;
-      msg += `\n💰 *TOTAL: ${formatPrice(total)}*\n\n📝 *Entrega:* ${formData.address}\nCC: ${formData.id_number}\nCel: ${formData.phone}`;
+      msg += `*--- RESUMEN ---*\n`;
+      msg += `💰 *Subtotal:* ${formatPrice(subtotal)}\n`;
+
+      // Lógica de Descuento
+      if (isWholesale) {
+        msg += `📉 *Descuento:* 40% OFF aplicado (-${formatPrice(discountAmount)})\n`;
+      } else {
+        msg += `📉 *Descuento:* Sin descuento\n`;
+      }
+
+      // Lógica de Envío
+      msg += `🚚 *Envío:* ${shippingCost === 0 ? "¡GRATIS!" : formatPrice(shippingCost)}\n`;
+
+      msg += `\n────────────────\n`;
+      msg += `💵 *TOTAL A PAGAR: ${formatPrice(total)}*\n`;
+      msg += `────────────────\n\n`;
+
+      msg += `👤 *DATOS DE ENVÍO:*\n`;
+      msg += `*Nombre:* ${formData.name}\n`;
+      msg += `*Documento:* ${formData.id_number}\n`;
+      msg += `*Celular:* ${formData.phone}\n`;
+      msg += `*Dirección:* ${formData.address}\n`;
+      msg += `*Ciudad/Depto:* ${formData.city}`;
 
       const whatsappUrl = `https://wa.me/584246043812?text=${encodeURIComponent(msg)}`;
 
@@ -185,7 +193,6 @@ export default function CartPage() {
     }
   };
 
-  // Clases Reutilizables
   const inputClass =
     "w-full bg-gray-50 border border-gray-200 rounded-lg p-3 text-sm text-gray-900 focus:bg-white focus:border-[#D4AF37] focus:ring-1 focus:ring-[#D4AF37] transition-all font-medium";
   const labelClass =
@@ -222,7 +229,6 @@ export default function CartPage() {
         </h1>
 
         <div className="grid gap-12 lg:grid-cols-12">
-          {/* LADO IZQUIERDO: PRODUCTOS */}
           <div className="lg:col-span-7 space-y-6">
             <div className="bg-gray-50 p-4 rounded-xl border border-gray-100 shadow-sm">
               <div className="flex justify-between items-center mb-3">
@@ -266,8 +272,7 @@ export default function CartPage() {
               </div>
             </div>
 
-            {items.map((item, index) => {
-              // Generamos una key única por variante
+            {items.map((item) => {
               const itemKey = `${item.id}-${item.selectedColor || ""}-${item.selectedSize || ""}`;
 
               return (
@@ -286,21 +291,108 @@ export default function CartPage() {
                   />
                   <div className="flex-1 flex flex-col justify-between">
                     <div className="flex justify-between items-start">
-                      <div>
+                      <div className="w-full">
                         <h3 className="font-serif text-lg text-gray-900">
                           {item.name}
                         </h3>
-                        <div className="flex flex-wrap gap-2 mt-2">
-                          <span className="text-[10px] text-gray-500 uppercase border px-2 py-0.5 rounded bg-gray-50">
-                            {item.category}
-                          </span>
-                          {(item.selectedColor || item.selectedSize) && (
-                            <span className="text-[10px] text-black font-bold uppercase border px-2 py-0.5 rounded bg-gray-50">
-                              {[item.selectedColor, item.selectedSize]
-                                .filter(Boolean)
-                                .join(" / ")}
-                            </span>
-                          )}
+                        {/* SELECTORES DE VARIANTES CORREGIDOS CON VALIDACIÓN */}
+                        <div className="flex flex-wrap gap-3 mt-4">
+                          {item.colors &&
+                            Array.isArray(item.colors) &&
+                            item.colors.length > 0 && (
+                              <div className="flex flex-col gap-1.5 items-start">
+                                <label className="text-[9px] uppercase font-black tracking-widest text-gray-400 ml-1">
+                                  Color
+                                </label>
+                                <div className="relative inline-block w-full sm:w-fit min-w-[130px]">
+                                  <select
+                                    value={item.selectedColor}
+                                    onChange={(e) =>
+                                      updateVariant(
+                                        item.id,
+                                        item.selectedColor,
+                                        item.selectedSize,
+                                        e.target.value,
+                                        item.selectedSize,
+                                      )
+                                    }
+                                    className="w-full appearance-none bg-white border border-gray-200 rounded-full pl-4 pr-10 py-2 text-[11px] font-bold text-gray-900 focus:border-[#D4AF37] focus:ring-1 focus:ring-[#D4AF37] outline-none transition-all cursor-pointer shadow-sm"
+                                  >
+                                    {item.colors.map((c: string) => (
+                                      <option key={c} value={c}>
+                                        {c.toUpperCase()}
+                                      </option>
+                                    ))}
+                                  </select>
+                                  {/* Flecha posicionada para no estorbar */}
+                                  <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400">
+                                    <svg
+                                      width="8"
+                                      height="5"
+                                      viewBox="0 0 10 6"
+                                      fill="none"
+                                      xmlns="http://www.w3.org/2000/svg"
+                                    >
+                                      <path
+                                        d="M1 1L5 5L9 1"
+                                        stroke="currentColor"
+                                        strokeWidth="2"
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                      />
+                                    </svg>
+                                  </div>
+                                </div>
+                              </div>
+                            )}
+
+                          {item.sizes &&
+                            Array.isArray(item.sizes) &&
+                            item.sizes.length > 0 && (
+                              <div className="flex flex-col gap-1.5 items-start">
+                                <label className="text-[9px] uppercase font-black tracking-widest text-gray-400 ml-1">
+                                  Talla
+                                </label>
+                                <div className="relative inline-block w-full sm:w-fit min-w-[90px]">
+                                  <select
+                                    value={item.selectedSize}
+                                    onChange={(e) =>
+                                      updateVariant(
+                                        item.id,
+                                        item.selectedColor,
+                                        item.selectedSize,
+                                        item.selectedColor,
+                                        e.target.value,
+                                      )
+                                    }
+                                    className="w-full appearance-none bg-white border border-gray-200 rounded-full pl-4 pr-10 py-2 text-[11px] font-bold text-gray-900 focus:border-[#D4AF37] focus:ring-1 focus:ring-[#D4AF37] outline-none transition-all cursor-pointer shadow-sm"
+                                  >
+                                    {item.sizes.map((s: string) => (
+                                      <option key={s} value={s}>
+                                        {s.toUpperCase()}
+                                      </option>
+                                    ))}
+                                  </select>
+                                  <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400">
+                                    <svg
+                                      width="8"
+                                      height="5"
+                                      viewBox="0 0 10 6"
+                                      fill="none"
+                                      xmlns="http://www.w3.org/2000/svg"
+                                    >
+                                      <path
+                                        d="M1 1L5 5L9 1"
+                                        stroke="currentColor"
+                                        strokeWidth="2"
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                      />
+                                    </svg>
+                                  </div>
+                                </div>
+                              </div>
+                            )}
                         </div>
                       </div>
                       <button
@@ -320,7 +412,7 @@ export default function CartPage() {
                         )}
                       </button>
                     </div>
-                    <div className="flex justify-between items-end mt-2">
+                    <div className="flex justify-between items-end mt-4">
                       <div className="flex items-center border border-gray-200 rounded-lg bg-gray-50">
                         <button
                           onClick={() =>
@@ -331,7 +423,7 @@ export default function CartPage() {
                               item.selectedSize,
                             )
                           }
-                          className="px-3 py-1 hover:bg-gray-200 text-gray-600"
+                          className="px-3 py-1 hover:bg-gray-200 text-gray-600 font-bold"
                         >
                           -
                         </button>
@@ -347,7 +439,7 @@ export default function CartPage() {
                               item.selectedSize,
                             )
                           }
-                          className="px-3 py-1 hover:bg-gray-200 text-gray-600"
+                          className="px-3 py-1 hover:bg-gray-200 text-gray-600 font-bold"
                         >
                           +
                         </button>
@@ -391,7 +483,6 @@ export default function CartPage() {
             </Link>
           </div>
 
-          {/* LADO DERECHO: FORMULARIO */}
           <div className="lg:col-span-5">
             <div className="bg-white p-6 md:p-8 rounded-2xl shadow-lg border border-gray-100 sticky top-24">
               <h3 className="font-serif text-xl text-gray-900 mb-6">
@@ -476,10 +567,12 @@ export default function CartPage() {
                 <div className="bg-gray-50 rounded-lg p-4 mt-6 space-y-2 border border-gray-100">
                   <div className="flex justify-between text-sm text-gray-600">
                     <span>Subtotal</span>
-                    <span>{formatPrice(subtotal)}</span>
+                    <span className="text-gray-900 font-medium">
+                      {formatPrice(subtotal)}
+                    </span>
                   </div>
                   {isWholesale && (
-                    <div className="flex justify-between text-sm text-green-600 font-medium">
+                    <div className="flex justify-between text-sm text-green-600 font-bold">
                       <span>Descuento Mayorista (40%)</span>
                       <span>- {formatPrice(discountAmount)}</span>
                     </div>

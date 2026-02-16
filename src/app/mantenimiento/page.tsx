@@ -28,7 +28,7 @@ const Maintenance = memo(function Maintenance() {
             Si necesitas atención urgente, contáctanos por Instagram
           </p>
           <a
-            href="https://instagram.com/RIO_Colombia"
+            href="https://www.instagram.com/riocolombia?igsh=MWJtZDhwYzgwaXRhaQ=="
             target="_blank"
             rel="noopener noreferrer"
             className="text-[10px] font-bold tracking-widest text-gray-900 hover:text-[#D4AF37] transition-colors duration-300"
